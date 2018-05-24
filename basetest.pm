@@ -250,6 +250,29 @@ sub result {
     return $self->{result} || 'na';
 }
 
+sub is_suspended {
+    my ($self) = @_;
+    return !$self->{running} && $self->{result} && $self->{result} eq 'suspended';
+}
+
+sub suspend {
+    my ($self) = @_;
+    return if $self->is_suspended;
+    $self->{running} = 0;
+    $self->{result}  = 'suspended';
+    $self->save_test_result();
+}
+
+sub resume {
+    my ($self) = @_;
+    print("autotest: in resume\n");
+    return unless $self->is_suspended;
+    $self->{running} = 1;
+    $self->{result}  = 'na';
+    $self->save_test_result();
+    print("autotest: after resume\n");
+}
+
 sub start {
     my ($self) = @_;
     $self->{running} = 1;
