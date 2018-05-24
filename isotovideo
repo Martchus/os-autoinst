@@ -433,6 +433,12 @@ while ($loop) {
             $loop = 0;
             next;
         }
+        if ($rsp->{cmd} eq 'set_var') {
+            use Data::Dumper;
+            print("set_var: " . Dumper($rsp) . "\n");
+            myjsonrpc::send_json($cfd, {set_var => [$rsp->{key}, $rsp->{value}]});
+            next;
+        }
         if ($rsp->{cmd} eq 'check_screen') {
             $no_wait = $rsp->{no_wait} // 0;
 
@@ -476,7 +482,12 @@ while ($loop) {
             myjsonrpc::send_json($r, {ret => 1});
             next;
         }
-        die "Unknown command $rsp->{cmd}";
+        if ($rsp->{cmd}) {
+            die "Unknown command $rsp->{cmd}";
+        }
+        else {
+            die 'No command specified';
+        }
     }
 
     if (defined $tags) {

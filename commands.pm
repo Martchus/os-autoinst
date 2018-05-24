@@ -321,6 +321,7 @@ sub run_daemon {
     Mojo::IOLoop->stream($stream);
 
     app->log->info("Daemon reachable under http://*:$port/$bmwqemu::vars{JOBTOKEN}/");
+    app->log->info(" - developer mode: http://*:$port/$bmwqemu::vars{JOBTOKEN}/developer");
     try {
         $daemon->run;
     }

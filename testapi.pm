@@ -84,6 +84,7 @@ our $last_matched_needle;
 
 sub send_key;
 sub check_screen;
+sub set_var;
 sub type_string;
 sub type_password;
 
@@ -631,6 +632,7 @@ to make sure that possibly deselected needles are now taken into account
 sub set_var {
     my ($var, $val, %args) = @_;
     $bmwqemu::vars{$var} = $val;
+    print("testapi: set_var called: $var=$val\n");
     if ($args{reload_needles}) {
         bmwqemu::save_vars();
         query_isotovideo('backend_reload_needles', {});
