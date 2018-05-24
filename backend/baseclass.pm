@@ -1179,5 +1179,10 @@ sub _child_process {
 
 }
 
+sub print_pid {
+    use English;
+    print("baseclass::print_id: $PID\n");
+}
+
 1;
 # vim: set sw=4 et:

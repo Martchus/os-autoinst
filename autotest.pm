@@ -290,6 +290,13 @@ sub runalltests {
         my $flags    = $t->test_flags();
         my $fullname = $t->{fullname};
 
+        # FIXME: reload vars (might have changed)
+        #bmwqemu::load_vars();
+        if ($fullname eq $bmwqemu::vars{PAUSE_AT}) {
+            # FIXME: actually pause here
+            print("pausing at test $fullname\n");
+        }
+
         if (!$vmloaded && $fullname eq $firsttest) {
             if ($bmwqemu::vars{SKIPTO}) {
                 if ($bmwqemu::vars{TESTDEBUG}) {

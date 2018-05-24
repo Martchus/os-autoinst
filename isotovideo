@@ -435,8 +435,10 @@ while ($loop) {
         }
         if ($rsp->{cmd} eq 'set_var') {
             use Data::Dumper;
-            print("set_var: " . Dumper($rsp) . "\n");
-            myjsonrpc::send_json($cfd, {set_var => [$rsp->{key}, $rsp->{value}]});
+            use English;
+            print("set_var: " . Dumper($rsp) . " ($PID)\n");
+            $bmwqemu::vars{$var} = $val;
+            bmwqemu::save_vars();
             next;
         }
         if ($rsp->{cmd} eq 'check_screen') {
