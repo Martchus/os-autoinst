@@ -56,7 +56,7 @@ sub new {
     my ($class, $testapi_console, $args) = @_;
     my $self = $class->SUPER::new($testapi_console, $args);
     $self->{socket_fd}      = 0;
-    $self->{socket_path}    = cwd() . '/virtio_console';
+    $self->{socket_path}    = $args->{socket_path} // (cwd() . '/virtio_console');
     $self->{snapshots}      = {};
     $self->{preload_buffer} = '';
     return $self;

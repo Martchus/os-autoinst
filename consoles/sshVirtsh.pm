@@ -259,6 +259,29 @@ sub add_vnc {
     return;
 }
 
+sub add_virtio_console {
+    my ($self, $args) = @_;
+
+    my $id = $args->{id} // 'virtio_console';
+    my $path = $args->{path};
+    my $doc     = $self->{domainxml};
+    my $devices = $self->{devices_element};
+
+    my $channel = $doc->createElement('channel');
+    $channel->setAttribute(type        => 'unix');
+    my $source = $doc->createElement('source');
+    $source->setAttribute(mode => 'bind');
+    $source->setAttribute(path => $path) if $path;
+    $channel->appendChild($source);
+    my $target = $doc->createElement('target');
+    $target->setAttribute(type => 'virtio');
+    $target->setAttribute(name => 'org.openqa.console.' . $id);
+    $channel->appendChild($target);
+    $devices->appendChild($channel);
+
+    return;
+}
+
 sub add_input {
     my ($self, $args) = @_;
 
