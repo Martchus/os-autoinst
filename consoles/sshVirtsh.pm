@@ -68,6 +68,8 @@ sub activate {
     $self->_init_xml();
 }
 
+# creates an XML document to configure the libvirt domain
+# (see https://libvirt.org/formatdomain.html for the specification of that config file)
 sub _init_xml {
     my ($self, $args) = @_;
 
@@ -198,6 +200,7 @@ sub change_domain_element {
     return;
 }
 
+# adds the serial console used for the serial log
 sub add_pty {
     my ($self, $args) = @_;
 
@@ -255,6 +258,25 @@ sub add_vnc {
     $elem->setAttribute(type    => 'address');
     $elem->setAttribute(address => '0.0.0.0');
     $graphics->appendChild($elem);
+
+    return;
+}
+
+# adds a further serial port
+# (in addition to the serial console on port 0 which added in add_pty)
+sub add_serial_console {
+    my ($self, $args) = @_;
+
+    my $doc     = $self->{domainxml};
+    my $devices = $self->{devices_element};
+    my $port    = $args->{port} // '1';
+
+    my $serial = $doc->createElement('serial');
+    $serial->setAttribute(type => 'pty');
+    my $target = $doc->createElement('target');
+    $target->setAttribute(port => $port);
+    $serial->appendChild($target);
+    $devices->appendChild($serial);
 
     return;
 }
