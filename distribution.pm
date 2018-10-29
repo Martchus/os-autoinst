@@ -54,6 +54,7 @@ sub add_console {
         'tty-console'     => 'ttyConsole',
         'ssh-xterm'       => 'sshXtermVt',
         'ssh-virtsh'      => 'sshVirtsh',
+        'ssh-virtsh-sut'  => 'sshVirtshSUT',
         'vnc-base'        => 'vnc_base',
         'local-Xvnc'      => 'localXvnc',
         'ssh-iucvconn'    => 'sshIucvconn',

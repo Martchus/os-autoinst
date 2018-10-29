@@ -20,6 +20,7 @@ use base ('backend::virt');
 use testapi qw(get_var get_required_var check_var);
 
 use IO::Select;
+use Mojo::File;
 
 # this is a fake backend to some extend. We don't start VMs, but provide ssh access
 # to a libvirt running host (KVM for System Z in mind)
@@ -194,7 +195,27 @@ sub load_snapshot {
     return $rsp;
 }
 
-# Open another ssh connection to grab the serial console.
+sub read_credentials_from_virsh_variables {
+    my ($self) = @_;
+
+    my ($hostname, $username, $password);
+    if (check_var('VIRSH_VMM_FAMILY', 'hyperv')) {
+        $hostname = get_required_var('VIRSH_GUEST');
+        $password = get_var('VIRSH_GUEST_PASSWORD');
+    }
+    else {
+        $hostname = get_required_var('VIRSH_HOSTNAME');
+        $username = get_var('VIRSH_USERNAME');
+        $password = get_var('VIRSH_PASSWORD');
+    }
+    return {
+        hostname => $hostname,
+        username => ($username // 'root'),
+        password => $password,
+    };
+}
+
+# opens another SSH connection to grab the serial console for the serial log
 sub start_serial_grab {
     my ($self, $name) = @_;
 
@@ -209,7 +230,8 @@ sub start_serial_grab {
         $hostname = get_required_var('VIRSH_HOSTNAME');
         $password = get_var('VIRSH_PASSWORD');
     }
-    my $chan = $self->start_ssh_serial(hostname => $hostname, password => $password, username => 'root');
+    my $credentials = $self->read_credentials_from_virsh_variables;
+    my $chan = $self->start_ssh_serial(%$credentials);
     if (check_var('VIRSH_VMM_FAMILY', 'vmware')) {
         # libvirt esx driver does not support `virsh console', so
         # we have to connect to VM's serial port via TCP which is
@@ -225,6 +247,36 @@ sub start_serial_grab {
     else {
         $chan->exec('virsh console ' . $name);
     }
+}
+
+# opens another SSH connection to grab the serial console with the specified port
+sub open_serial_console_via_ssh {
+    my ($self, $name, $port) = @_;
+
+    # FIXME: don't hardcode path
+    my $read_serial_script = Mojo::File->new('/hdd/openqa-devel/repos/os-autoinst/read_serial_dev_from_virsh_xml.pm')->slurp;
+    $read_serial_script =~ s/\\/\\\\/g;
+    $read_serial_script =~ s/\"/\\\"/g;
+    $read_serial_script =~ s/\$/\\\$/g;
+    $read_serial_script =~ s/\</\\\</g;
+    $read_serial_script =~ s/\>/\\\>/g;
+
+    bmwqemu::diag("Starting SSH connection to connect to libvirt domain $name via serial port $port");
+    my $credentials = $self->read_credentials_from_virsh_variables;
+    my $ssh = $self->new_ssh_connection(%$credentials);
+    my $chan = $ssh->channel();
+    die 'No channel found' unless $chan;
+    $chan->blocking(0);
+    $chan->pty(1);
+    my $command = "screen \"\$(virsh dumpxml \"$name\" | perl -e \"$read_serial_script\" \"$port\")\"";
+    bmwqemu::diag("command to open serial console of $name at port $port:\n$command");
+    $chan->exec($command);
+
+    # note: The 'screen' command does basically the same as the 'virsh console' command in start_serial_grab. 'virsh console'
+    #       can not be used here because it only works for the serial device added as console. So we need to figure out the device
+    #       on the host for the specified serial $port in the SUT manually.
+
+    return $ssh;
 }
 
 sub check_socket {
