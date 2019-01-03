@@ -18,6 +18,7 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 use bmwqemu;
 use testapi 'diag';
+use Data::Dumper;
 use OpenQA::Isotovideo::Interface;
 
 
@@ -94,7 +95,7 @@ sub _postpone_backend_command_until_resumed {
     return unless $reason_for_pause;
 
     # emit info
-    $self->_send_to_cmd_srv({paused => $response, reason => $reason_for_pause});
+    $self->send_to_cmd_srv({paused => $response, reason => $reason_for_pause});
     diag("isotovideo: paused, so not passing $cmd to backend");
 
     # postpone execution of command
@@ -105,12 +106,12 @@ sub _postpone_backend_command_until_resumed {
     return 1;
 }
 
-sub _send_to_cmd_srv {
+sub send_to_cmd_srv {
     my ($self, $data) = @_;
     myjsonrpc::send_json($self->cmd_srv_fd, $data);
 }
 
-sub _send_to_backend {
+sub send_to_backend {
     my ($self, $data) = @_;
     myjsonrpc::send_json($self->backend_fd, $data);
 }
@@ -119,6 +120,30 @@ sub send_to_backend_requester {
     my ($self, $data) = @_;
     myjsonrpc::send_json($self->backend_requester, $data);
     $self->backend_requester(undef);
+}
+
+sub send_to_cmd_srv_and_wait_for_response {
+    my ($self, $data, $timeout, $diag_msg) = @_;
+    $timeout //= 10;
+
+    # ask the command server to tell the websocket clients we're stopping and terminate itself
+    $self->send_to_cmd_srv($data);
+
+    # give the command server a few seconds to repond
+    while (1) {
+        my @handles_ready_to_read = IO::Select->new(($self->cmd_srv_fd))->can_read($timeout);
+        if (!@handles_ready_to_read) {
+            $diag_msg //= 'sent a message to the command server';
+            diag("isotovideo: $diag_msg but got no response within $timeout s");
+            return undef;
+        }
+        my $response = myjsonrpc::read_json($handles_ready_to_read[0]);
+        if (ref $response eq 'HASH' || $response->{status} eq 'broadcast done') {
+            return $response;
+        }
+        diag('isotovideo: got rubbish from command server');
+        diag('only got: ' . Dumper($response)) if (defined $response);
+    }
 }
 
 sub _respond {
@@ -138,11 +163,11 @@ sub _pass_command_to_backend_unless_paused {
     die 'isotovideo: we need to implement a backend queue' if $self->backend_requester;
     $self->backend_requester($self->answer_fd);
 
-    $self->_send_to_cmd_srv({
+    $self->send_to_cmd_srv({
             $backend_cmd         => $response,
             current_api_function => $backend_cmd,
     });
-    $self->_send_to_backend({cmd => $backend_cmd, arguments => $response});
+    $self->send_to_backend({cmd => $backend_cmd, arguments => $response});
     $self->current_api_function($backend_cmd);
 }
 
@@ -165,7 +190,7 @@ sub _handle_command_report_timeout {
 
     my $reason_for_pause = $response->{msg};
     $self->reason_for_pause($reason_for_pause);
-    $self->_send_to_cmd_srv({paused => $response, reason => $reason_for_pause});
+    $self->send_to_cmd_srv({paused => $response, reason => $reason_for_pause});
     diag('isotovideo: pausing test execution on timeout as requested at ' . $self->current_test_full_name);
 
     # postpone sending the reply
@@ -187,7 +212,7 @@ sub _handle_command_set_pause_at_test {
 
     diag('isotovideo: test execution will be paused at test ' . $pause_test_name);
     $self->pause_test_name($pause_test_name);
-    $self->_send_to_cmd_srv({set_pause_at_test => $pause_test_name});
+    $self->send_to_cmd_srv({set_pause_at_test => $pause_test_name});
     $self->_respond_ok();
 }
 
@@ -196,7 +221,7 @@ sub _handle_command_set_pause_on_screen_mismatch {
     my $pause_on_screen_mismatch = $response->{pause_on};
 
     $self->pause_on_screen_mismatch($pause_on_screen_mismatch);
-    $self->_send_to_cmd_srv({set_pause_on_screen_mismatch => ($pause_on_screen_mismatch // Mojo::JSON->false)});
+    $self->send_to_cmd_srv({set_pause_on_screen_mismatch => ($pause_on_screen_mismatch // Mojo::JSON->false)});
     $self->_respond_ok();
 }
 
@@ -205,7 +230,7 @@ sub _handle_command_set_pause_on_next_command {
     my $set_pause_on_next_command = ($response->{flag} ? 1 : 0);
 
     $self->pause_on_next_command($set_pause_on_next_command);
-    $self->_send_to_cmd_srv({set_pause_on_next_command => $set_pause_on_next_command});
+    $self->send_to_cmd_srv({set_pause_on_next_command => $set_pause_on_next_command});
     $self->_respond_ok();
 }
 
@@ -218,7 +243,7 @@ sub _handle_command_resume_test_execution {
           'isotovideo: test execution will be resumed'
         : 'isotovideo: resuming test execution requested but not paused anyways'
     );
-    $self->_send_to_cmd_srv({resume_test_execution => $postponed_command});
+    $self->send_to_cmd_srv({resume_test_execution => $postponed_command});
 
     # unset paused state to continue passing commands to backend
     $self->reason_for_pause(0);
@@ -255,7 +280,7 @@ sub _handle_command_set_current_test {
     my $pause_test_name = $self->pause_test_name;
     $self->current_test_name($test_name);
     $self->current_test_full_name($full_test_name);
-    $self->_send_to_cmd_srv({
+    $self->send_to_cmd_srv({
             set_current_test       => $test_name,
             current_test_full_name => $full_test_name,
     });
@@ -290,7 +315,7 @@ sub _handle_command_check_screen {
         check     => $response->{check},
     );
     my $current_api_function = $response->{check} ? 'check_screen' : 'assert_screen';
-    $self->_send_to_cmd_srv({
+    $self->send_to_cmd_srv({
             check_screen         => \%arguments,
             current_api_function => $current_api_function,
     });
@@ -306,7 +331,7 @@ sub _handle_command_set_assert_screen_timeout {
     my ($self, $response) = @_;
 
     my $timeout = $response->{timeout};
-    $self->_send_to_cmd_srv({set_assert_screen_timeout => $timeout});
+    $self->send_to_cmd_srv({set_assert_screen_timeout => $timeout});
     $bmwqemu::backend->_send_json({
             cmd       => 'set_assert_screen_timeout',
             arguments => $timeout,
@@ -351,7 +376,7 @@ sub _handle_command_send_clients {
     my ($self, $response) = @_;
     delete $response->{cmd};
     delete $response->{json_cmd_token};
-    $self->_send_to_cmd_srv($response);
+    $self->send_to_cmd_srv($response);
     $self->_respond_ok();
 }
 
