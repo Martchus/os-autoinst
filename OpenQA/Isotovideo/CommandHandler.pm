@@ -138,7 +138,7 @@ sub send_to_cmd_srv_and_wait_for_response {
             return undef;
         }
         my $response = myjsonrpc::read_json($handles_ready_to_read[0]);
-        if (ref $response eq 'HASH' || $response->{status} eq 'broadcast done') {
+        if (ref $response eq 'HASH' && $response->{status} eq 'broadcast done') {
             return $response;
         }
         diag('isotovideo: got rubbish from command server');

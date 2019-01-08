@@ -328,6 +328,10 @@ sub run_daemon {
     })->watch($isotovideo, 1, 0);    # watch only readable (and not writable)
 
     app->log->info("cmdsrv: daemon reachable under http://*:$port/$bmwqemu::vars{JOBTOKEN}/");
+    Mojo::IOLoop->next_tick(sub { $SIG{TERM} = sub {
+        diag('cmdsrv: got term on next_tick');
+        Mojo::IOLoop->stop;
+    }});
     try {
         $daemon->run;
     }
@@ -348,14 +352,27 @@ sub start_server {
     $isotovideo->autoflush(1);
 
     my $process = process(sub {
-            $SIG{TERM} = 'DEFAULT';
-            $SIG{INT}  = 'DEFAULT';
-            $SIG{HUP}  = 'DEFAULT';
-            $SIG{CHLD} = 'DEFAULT';
+            $SIG{TERM} = sub {
+                diag('cmdsrv: got term');
+                exit(1);
+            };
+            $SIG{INT}  = sub {
+                diag('cmdsrv: got term');
+                exit(2);
+            };
+            $SIG{HUP}  = sub {
+                diag('cmdsrv: got sighup');
+                exit(3);
+            };
+            $SIG{CHLD} = sub {
+                diag('cmdsrv: got chld');
+                exit(4);
+            };
 
             close($child);
             $0 = "$0: commands";
             run_daemon($port, $isotovideo);
+            diag('cmdsrv: daemon finished');
             Devel::Cover::report() if Devel::Cover->can('report');
             _exit(0);
     })->blocking_stop(1)->internal_pipes(0)->set_pipes(0)->start;

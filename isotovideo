@@ -145,8 +145,13 @@ my $loop = 1;
 
 sub kill_commands {
     my ($reason) = @_;
+
+    diag('killing command server ' . __LINE__);
+
     return unless defined $cmd_srv_process;
     return unless $cmd_srv_process->is_running;
+
+    diag('killing command server because ' . ($reason // 'we can'));
 
     # inform websocket clients
     if ($command_handler && $reason) {
@@ -162,30 +167,41 @@ sub kill_commands {
 
     # stop the command server
     $cmd_srv_process->stop() if $cmd_srv_process->is_running;
+    $cmd_srv_process = undef;
+    diag('done with command server');
 }
 
 sub kill_autotest {
     return unless defined $testprocess;
+
+    diag('killing autotest process ' . $testprocess->pid);
     $testprocess->stop() if $testprocess->is_running;
+    $testprocess = undef;
+    diag('done with autotest process');
 }
 
 sub kill_backend {
-    if (defined $bmwqemu::backend && $backend_process) {
-        diag "killing backend process " . $backend_process->pid;
-        $backend_process->stop if $backend_process->is_running;
-        diag("done with backend process");
-    }
+    return unless defined $bmwqemu::backend && $backend_process;
+
+    diag('killing backend process ' . $backend_process->pid);
+    $backend_process->stop if $backend_process->is_running;
+    $backend_process = undef;
+    diag('done with backend process');
 }
 
 sub signalhandler {
     my ($sig) = @_;
-    diag("signalhandler got $sig");
+
+    use English;
+    use Devel::StackTrace;
+    diag("signalhandler ($PID) got $sig");
+    diag("sh from " . Devel::StackTrace->new->as_string);
     if ($loop) {
         $loop = 0;
         return;
     }
+    kill_commands("received signal ($PID) $sig");
     kill_backend;
-    kill_commands("received signal $sig");
     kill_autotest;
     _exit(1);
 }
@@ -290,6 +306,7 @@ $io_select->add($testfd);
 $io_select->add($cmd_srv_fd);
 $io_select->add($backend_process->channel_out);
 
+# stop main loop as soon as one of the child processes terminates
 my $stop_loop = sub { $loop = 0 if $loop; };
 $testprocess->once(collected => $stop_loop);
 $backend_process->once(collected => $stop_loop);
@@ -439,8 +456,11 @@ if (!$return_code && $command_handler->test_completed && $bmwqemu::vars{BACKEND}
 }
 
 END {
-    kill_backend;
+    use Devel::StackTrace;
+    diag("reached the end from " . Devel::StackTrace->new->as_string);
+
     kill_commands('test execution ended through exception');
+    kill_backend;
     kill_autotest;
     # in case of early exit, e.g. help display
     $return_code //= 0;

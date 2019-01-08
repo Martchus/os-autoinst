@@ -228,6 +228,9 @@ sub run_all {
 sub handle_sigterm {
     my ($sig) = @_;
 
+    use Carp qw(cluck longmess shortmess);
+    cluck 'autotest: handle_sigterm ' . $sig;
+
     if ($current_test) {
         bmwqemu::diag("autotest received signal $sig, saving results of current test before exiting");
         $current_test->result('canceled');
