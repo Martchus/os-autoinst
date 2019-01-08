@@ -32,7 +32,7 @@ use IO::Select;
 use POSIX '_exit';
 require IPC::System::Simple;
 use Mojo::IOLoop::ReadWriteProcess 'process';
-use Mojo::IOLoop::ReadWriteProcess::Session 'session';
+#use Mojo::IOLoop::ReadWriteProcess::Session 'session';
 use myjsonrpc;
 use bmwqemu;    # TODO: move the whole printing out of bmwqemu
 
@@ -44,11 +44,11 @@ sub new {
     $self->{backend}      = "backend::$name"->new();
     $self->{backend_name} = $name;
 
-    session->on(
-        collected_orphan => sub {
-            my ($session, $p) = @_;
-            bmwqemu::diag("Driver backend collected unknown process with pid " . $p->pid . " and exit status: " . $p->exit_status);
-        });
+    #session->on(
+    #    collected_orphan => sub {
+    #        my ($session, $p) = @_;
+    #        bmwqemu::diag("Driver backend collected unknown process with pid " . $p->pid . " and exit status: " . $p->exit_status);
+    #    });
 
     $self->start();
 

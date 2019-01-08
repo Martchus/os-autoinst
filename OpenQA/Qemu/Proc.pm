@@ -42,7 +42,7 @@ use OpenQA::Qemu::ControllerConf;
 use OpenQA::Qemu::SnapshotConf;
 use osutils qw(gen_params runcmd simple_run);
 use Mojo::IOLoop::ReadWriteProcess 'process';
-use Mojo::IOLoop::ReadWriteProcess::Session 'session';
+#use Mojo::IOLoop::ReadWriteProcess::Session 'session';
 
 use POSIX ();
 
@@ -358,16 +358,16 @@ sub gen_runfile {
 sub exec_qemu {
     my $self   = shift;
     my @params = $self->gen_cmdline();
-    session->enable;
+    #session->enable;
 
-    session->on(
-        collected_orphan => sub {
-            my ($session, $p) = @_;
-            bmwqemu::diag("Collected unknown process with pid " . $p->pid . " and exit status: " . $p->exit_status);
-        });
+    #session->on(
+    #    collected_orphan => sub {
+    #        my ($session, $p) = @_;
+    #        bmwqemu::diag("Collected unknown process with pid " . $p->pid . " and exit status: " . $p->exit_status);
+    #    });
 
     bmwqemu::diag("starting: " . join(" ", @params));
-    session->enable_subreaper;
+    #session->enable_subreaper;
     $self->_process->code(sub {
             $SIG{__DIE__} = undef;    # overwrite the default - just exit
             system $self->qemu_bin, '-version';

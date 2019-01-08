@@ -77,14 +77,14 @@ use Time::HiRes qw(gettimeofday tv_interval sleep time);
 use File::Spec;
 use File::Path;
 use Mojo::IOLoop::ReadWriteProcess 'process';
-use Mojo::IOLoop::ReadWriteProcess::Session 'session';
+#use Mojo::IOLoop::ReadWriteProcess::Session 'session';
 Getopt::Long::Configure("no_ignore_case");
 use OpenQA::Isotovideo::CommandHandler;
 use OpenQA::Isotovideo::Interface;
 use OpenQA::Isotovideo::Utils;
 
-session->enable;
-session->enable_subreaper;
+#session->enable;
+#session->enable_subreaper;
 
 my %options;
 # global exit status

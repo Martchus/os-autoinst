@@ -29,7 +29,7 @@ use POSIX '_exit';
 use cv;
 use Scalar::Util 'blessed';
 use Mojo::IOLoop::ReadWriteProcess 'process';
-use Mojo::IOLoop::ReadWriteProcess::Session 'session';
+#use Mojo::IOLoop::ReadWriteProcess::Session 'session';
 
 our @EXPORT_OK = qw(loadtest $current_test $selected_console $last_milestone_console query_isotovideo);
 

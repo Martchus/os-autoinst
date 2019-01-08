@@ -37,7 +37,7 @@ BEGIN {
 use Mojolicious::Lite;
 use Mojo::IOLoop;
 use Mojo::IOLoop::ReadWriteProcess 'process';
-use Mojo::IOLoop::ReadWriteProcess::Session 'session';
+#use Mojo::IOLoop::ReadWriteProcess::Session 'session';
 use Mojo::Server::Daemon;
 use File::Basename;
 use Time::HiRes 'gettimeofday';
