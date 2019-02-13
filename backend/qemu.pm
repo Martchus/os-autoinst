@@ -656,7 +656,7 @@ sub start_qemu {
     @tapscript     = split /\s*,\s*/, $vars->{TAPSCRIPT}     if $vars->{TAPSCRIPT};
     @tapdownscript = split /\s*,\s*/, $vars->{TAPDOWNSCRIPT} if $vars->{TAPDOWNSCRIPT};
 
-    my $num_networks = 1;
+    my $num_networks = $vars->{MULTINET} ? 2 : 1;
     $num_networks = max($num_networks, scalar @nicmac, scalar @nicvlan, scalar @tapdev);
 
     if ($vars->{OFFLINE_SUT}) {
@@ -801,11 +801,6 @@ sub start_qemu {
 
         foreach my $attribute (qw(KERNEL INITRD APPEND)) {
             sp(lc($attribute), $vars->{$attribute}) if $vars->{$attribute};
-        }
-
-        if ($vars->{MULTINET}) {
-            sp('net', [qv "nic vlan=1 model=$vars->{NICMODEL} macaddr=52:54:00:12:34:57"]);
-            sp('net', [qw(none vlan=1)]);
         }
 
         unless ($vars->{QEMU_NO_TABLET}) {
