@@ -656,7 +656,7 @@ sub start_qemu {
     @tapscript     = split /\s*,\s*/, $vars->{TAPSCRIPT}     if $vars->{TAPSCRIPT};
     @tapdownscript = split /\s*,\s*/, $vars->{TAPDOWNSCRIPT} if $vars->{TAPDOWNSCRIPT};
 
-    my $num_networks = $vars->{MULTINET} ? 2 : 1;
+    my $num_networks = 1;
     $num_networks = max($num_networks, scalar @nicmac, scalar @nicvlan, scalar @tapdev);
 
     if ($vars->{OFFLINE_SUT}) {
@@ -767,6 +767,11 @@ sub start_qemu {
                 die "unknown NICTYPE $vars->{NICTYPE}\n";
             }
             sp('device', [qv "$vars->{NICMODEL} netdev=qanet$i mac=$nicmac[$i]"]);
+            if ($vars->{MULTINET}) {
+                my $workerid = $vars->{WORKER_ID};
+                my $second_mac = sprintf('52:54:00:12:%02x:%02x', int($workerid / 256) + $i * 64 + 1, $workerid % 256);
+                sp('device', [qv "$vars->{NICMODEL} netdev=qanet$i mac=$second_mac"]);
+            }
         }
 
         sp('smbios', $vars->{QEMU_SMBIOS}) if $vars->{QEMU_SMBIOS};
