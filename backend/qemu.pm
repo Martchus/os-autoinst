@@ -770,7 +770,9 @@ sub start_qemu {
             if ($vars->{MULTINET}) {
                 my $workerid = $vars->{WORKER_ID};
                 my $second_mac = sprintf('52:54:00:12:%02x:%02x', int($workerid / 256) + $i * 64 + 1, $workerid % 256);
-                sp('device', [qv "$vars->{NICMODEL} netdev=qanet$i mac=$second_mac"]);
+                #sp('device', [qv "$vars->{NICMODEL} netdev=qanet$i mac=$second_mac"]);
+                sp('net', [qw(nic model=virtio), "macaddr=$second_mac"]);
+                sp('net', [$vars->{NICTYPE}]);
             }
         }
 
