@@ -39,8 +39,8 @@ sub calculate_git_hash {
 
 Takes a test or needles distribution directory parameter and checks out the
 referenced git repository into a local working copy with an additional,
-optional git refspec to checkout. The git clone depth can be specified in the
-argument C<clone_depth> which defaults to 1.
+optional git branch/tag name to checkout. The git clone depth can be specified in
+the argument C<clone_depth> which defaults to 1.
 
 =cut
 sub checkout_git_repo_and_branch {
@@ -58,11 +58,11 @@ sub checkout_git_repo_and_branch {
     my $local_path = $url->path->parts->[-1] =~ s/.git//r;
     my $clone_args = "--depth $args{clone_depth}";
     if ($branch) {
-        diag "Checking out git refspec/branch '$branch'";
+        diag "Using branch/tag '$branch' for $dir_variable checkout";
         $clone_args .= " --branch $branch";
     }
     if (!-e $local_path) {
-        diag "Cloning git URL '$clone_url' to use as test distribution";
+        diag "Cloning Git URL '$clone_url' to use as $dir_variable";
         qx{env GIT_SSH_COMMAND="ssh -oBatchMode=yes" git clone $clone_args $clone_url};
     }
     return $bmwqemu::vars{$dir_variable} = File::Spec->rel2abs($local_path);
