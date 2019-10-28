@@ -34,6 +34,7 @@ use OpenQA::Benchmark::Stopwatch;
 our %needles;
 our %tags;
 our $needledir;
+our $needlevcs;
 our $cleanuphandler;
 
 sub is_click_point_valid {
@@ -334,6 +335,18 @@ sub init {
     # initialize/re-assign global $needledir
     $needledir = ($user_provided_needles_dir // default_needles_dir);
     die "needledir not found: $needledir (check vars.json?)" unless -d $needledir;
+
+    # initialize vcs info
+    $needlevcs = {};
+    if (my $version_hash = $bmwqemu::vars{NEEDLES_GIT_HASH}) {
+        $needlevcs->{version_hash} = $version_hash;
+        if (my $url = $bmwqemu::vars{NEEDLES_GIT_URL_FILE_RAW}) {
+            $needlevcs->{url_file_raw} = ($url =~ s/\$VERSION_HASH/$version_hash/r);
+        }
+        if (my $url = $bmwqemu::vars{NEEDLES_GIT_URL_FILE_VIEW}) {
+            $needlevcs->{url_file_view} = ($url =~ s/\$VERSION_HASH/$version_hash/r);
+        }
+    }
 
     %needles = ();
     %tags    = ();

@@ -65,6 +65,16 @@ sub checkout_git_repo_and_branch {
         diag "Cloning Git URL '$clone_url' to use as $dir_variable";
         qx{env GIT_SSH_COMMAND="ssh -oBatchMode=yes" git clone $clone_args $clone_url};
     }
+
+    # deduce URL templates for the Git host if not already present (currently only GitHub is supported)
+    my $meta_variable = ($args{meta_variable} // $dir_variable);
+    if ($url->scheme eq 'github.com') {
+        my $repo_path  = ($url->path =~ s/(^\/)|(.git$)//rg);
+        bmwqemu::vars{"${meta_variable}_GIT_URL_FILE_RAW"}  //= "https://raw.githubusercontent.com/$repo_path/\$VERSION_HASH/\$FILE_NAME";
+        bmwqemu::vars{"${meta_variable}_GIT_URL_FILE_VIEW"} //= "https://github.com/$repo_path/blob/\$VERSION_HASH/\$FILE_NAME";
+        bmwqemu::vars{"${meta_variable}_GIT_URL_FILE_EDIT"} //= "https://github.com/$repo_path/edit/\$VERSION_HASH/\$FILE_NAME";
+    }
+
     return $bmwqemu::vars{$dir_variable} = File::Spec->rel2abs($local_path);
 }
 

@@ -244,7 +244,7 @@ $SIG{HUP}  = \&signalhandler;
 $ENV{LC_ALL} = 'en_US.UTF-8';
 $ENV{LANG}   = 'en_US.UTF-8';
 
-OpenQA::Isotovideo::Utils::checkout_git_repo_and_branch('CASEDIR');
+OpenQA::Isotovideo::Utils::checkout_git_repo_and_branch('CASEDIR', meta_variable => 'TEST');
 
 # Try to load the main.pm from one of the following in this order:
 #  - product dir

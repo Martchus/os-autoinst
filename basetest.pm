@@ -151,6 +151,7 @@ sub record_screenmatch {
         area       => $serialized_match->{area},
         error      => $serialized_match->{error},
         json       => $serialized_match->{json},
+        vcs_url    => $serialized_match->{vcs_url},
         tags       => [@$tags],                            # make a copy
         properties => [@$properties],                      # make a copy
         frametime  => _framenumber_to_timerange($frame),
@@ -220,7 +221,11 @@ sub _serialize_match {
         $na->{click_point} = $area->{click_point} if exists $area->{click_point};
         push @{$match{area}}, $na;
     }
-
+    if (my $url_file_raw = $needlevcs->{url_file_raw}) {
+        my $pngfile              = ($jsonfile     =~ s/\.json$/\.png/r);
+        $match{json_vcs_url_raw} = ($url_file_raw =~ s/\$FILE_NAME/$jsonfile/r);
+        $match{png_vcs_url_raw}  = ($url_file_raw =~ s/\$FILE_NAME/$pngfile/r);
+    }
     return \%match;
 }
 
