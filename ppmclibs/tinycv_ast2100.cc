@@ -1,4 +1,4 @@
-// Copyright © 2012-2016 SUSE LLC
+// Copyright © 2012-2020 SUSE LLC
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,10 +13,12 @@
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, see <http://www.gnu.org/licenses/>.
 
-#include "opencv2/core/core.hpp"
+#include <opencv2/core/core.hpp>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sys/stat.h>
 
 #define DECBITS 10

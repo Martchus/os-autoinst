@@ -1,4 +1,4 @@
-// Copyright © 2012-2016 SUSE LLC
+// Copyright © 2012-2020 SUSE LLC
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,20 +13,20 @@
 // You should have received a copy of the GNU General Public License along
 // with this program; if not, see <http://www.gnu.org/licenses/>.
 
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <algorithm> // std::min
 #include <cerrno>
-#include <exception>
 #include <iostream>
 #include <cstdint>
 #include <cstdio>
-#include <sys/time.h>
-
-#include <algorithm> // std::min
+#include <exception>
 #include <vector>
 
-#include "opencv2/calib3d/calib3d.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include <opencv2/imgproc/imgproc.hpp>
+#include <sys/time.h>
 
 #include "tinycv.h"
 
@@ -281,9 +281,9 @@ std::vector<int> search_TEMPLATE(const Image* scene, const Image* object,
 // Use Peak signal-to-noise ratio to check the similarity between two
 // images.
 //
-// This method calculate the mean square error, but returns a measure
-// in dB units. If the images are the same, it return 0.0, and if the
-// images are the same but with different compression ration (or noise
+// This method calculates the mean square error, but returns a measure
+// in dB units. If the images are the same, it returns 0.0 and if the
+// images are the same but with different compression ratio (or noise
 // when the input is from analog video), the range is between 30 and
 // 50. Maybe higher is the quality is bad.
 //
@@ -299,14 +299,12 @@ double getPSNR(const Mat& I1, const Mat& I2)
     assert(I1.depth() == CV_8U);
     assert(I1.channels() == 3);
 
-    double noise = norm(I1, I2);
-
+    const double noise = norm(I1, I2);
     if (!noise) {
         return VERY_SIM;
     }
 
-    double signal = 255.0 * 255 * 3 * I1.total();
-
+    const double signal = 255.0 * 255 * 3 * I1.total();
     return 10.0 * log10(signal / (noise * noise));
 }
 
