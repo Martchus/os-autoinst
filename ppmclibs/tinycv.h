@@ -24,7 +24,7 @@ Image *image_new(long width, long height);
 Image *image_read(const char *filename);
 bool image_write(const Image* const s, const char* filename);
 // returns copy to static buffer
-std::vector<unsigned char> *image_ppm(Image *s);
+const std::vector<unsigned char>* image_ppm(Image *s);
 Image *image_from_ppm(const unsigned char *data, size_t len);
 
 std::vector<int> image_search(Image *s, Image *needle, long x, long y, long width, long height, long margin, double &similarity);

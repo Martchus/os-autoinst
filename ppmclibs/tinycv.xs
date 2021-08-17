@@ -118,7 +118,7 @@ bool write(tinycv::Image self, const char *file)
 
 SV *ppm_data(tinycv::Image self)
   CODE:
-    std::vector<unsigned char> *buf = image_ppm(self);
+    const std::vector<unsigned char>* const buf = image_ppm(self);
     RETVAL = newSVpv(reinterpret_cast<const char*>(buf->data()), buf->size());
 
   OUTPUT:

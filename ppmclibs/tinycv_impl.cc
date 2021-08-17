@@ -405,7 +405,7 @@ bool image_write(const Image* const s, const char* filename)
     return imwrite(filename, s->img);
 }
 
-std::vector<uchar>* image_ppm(Image* s)
+const std::vector<uchar>* image_ppm(Image* s)
 {
     // reuse memory
     static std::vector<uchar> buf;
