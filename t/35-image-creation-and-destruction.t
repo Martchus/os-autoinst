@@ -54,8 +54,25 @@ for my $i (1 .. 10000) {
     my @res = $test_image->search_needle($ref_image, 100, 100, 50, 50, 0);
     is_deeply \@res, [1, 100, 100], 'search ($i)' or diag explain \@res;
 
+    my $scaled_image = $test_image->scale(1000, 500);
+    is $scaled_image->xres, 1000, "scaled image width ($i)";
+    is $scaled_image->yres, 500, "scaled image height ($i)";
+
+    is $ref_image->similarity($test_image), 1000000, "similarity ($i)";
+
+    my $absdiff = $ref_image->absdiff($test_image);
+    is $absdiff->xres, 1024, "absdiff width ($i)";
+    is $absdiff->yres, 768, "absdiff height ($i)";
+
+    my $image_from_ppm_data = tinycv::from_ppm($ref_image->ppm_data);
+    is $image_from_ppm_data->xres, 1024, "from_ppm width ($i)";
+    is $image_from_ppm_data->yres, 768, "from_ppm height ($i)";
+
     undef $ref_image;
     undef $test_image;
+    undef $scaled_image;
+    undef $absdiff;
+    undef $image_from_ppm_data;
 }
 
 done_testing;
