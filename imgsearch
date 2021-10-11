@@ -6,7 +6,7 @@
 use Mojo::Base -strict, -signatures;
 use Mojo::JSON qw(encode_json);
 use Mojo::Log;
-use Mojo::Util qw(getopt);
+use Getopt::Long::Descriptive;
 
 use FindBin '$Bin';
 use lib "$Bin";
@@ -36,47 +36,34 @@ use needle;
     sub from_paths ($needle_paths, @args) { [map { basic_needle->new($_, @args) } @$needle_paths] }
 }
 
-sub print_usage {
-    print "imgsearch [options]
-
-options:
-    --needle-images    specifies images to look for
-    --haystack-images  specifies images to look in
-    --verbose          enables debug output
-
-example:
-imagesearch \
-    --needle-images logo1.png logo2.png \
-    --haystack-images asset.png screenshot.png
-";
-    exit 0;
-}
-
-getopt 'needle-images=s@{1,}' => \my @needle_image_paths,
-  'haystack-images=s@{1,}'    => \my @image_paths,
-  'match-level=f'             => \my $match_level,
-  'margin=f'                  => \my $margin,
-  'threshold=f'               => \my $threshold,
-  'search-ratio=f'            => \my $search_ratio,
-  'v|verbose'                 => \my $verbose;
-
-print_usage unless @needle_image_paths && @image_paths;
+my ($opt, $usage) = describe_options(
+    'imgsearch %o',
+    ['needle-images=s@{1,}',   'pecifies images to look for',                                                         {required => 1}],
+    ['haystack-images=s@{1,}', 'specifies images to look in',                                                         {required => 1}],
+    ['match-level=f',          'specifies the min. similarity for an occurrence to be considered a match in percent', {default  => 80.0}],
+    ['threshold=f',            'hidden',                                                                              {default  => 0.0}],
+    ['margin=f',               'hidden',                                                                              {default  => 1000000}],
+    ['search-ratio=f',         'hidden',                                                                              {default  => 0.0}],
+    ['verbose|v',              'enables debug output'],
+    ['help',                   'prints help', {shortcircuit => 1}],
+);
+print $usage->text and exit if $opt->help;
 
 # initialize logging, tinycv and parameters
 my $log = Mojo::Log->new;
-$log->level($verbose ? 'debug' : 'info');
+$log->level($opt->verbose ? 'debug' : 'info');
 $log->debug('Loading tinycv');
 cv::init;
 require tinycv;
-$match_level  //= 80;         # the similarity level required to consider a finding a match (unit: percent)
-$margin       //= 1000000;    # very high value to search within full image by default (unit: pixel)
-$search_ratio //= 0;          # set to zero to disable unwanted computation of margin (which assumes an image width of 1024 px)
-$threshold    //= 0.0;        # subtracted from each area's match level; just keep at zero here
+my $match_level  = $opt->match_level;     # the similarity level required to consider a finding a match (unit: percent)
+my $margin       = $opt->margin;          # very high value to search within full image by default (unit: pixel)
+my $search_ratio = $opt->search_ratio;    # set to zero to disable unwanted computation of margin (which assumes an image width of 1024 px)
+my $threshold    = $opt->threshold;       # subtracted from each area's match level; just keep at zero here
 $log->debug("Martch-level: $match_level, margin: $margin, threshold: $threshold, search ratio: $search_ratio");
 
 # load needles
 $log->info('Loading needles');
-my $needles = basic_needle::from_paths(\@needle_image_paths, $match_level, $margin);
+my $needles = basic_needle::from_paths($opt->needle_images, $match_level, $margin);
 
 # search needles in images
 my %results = map {
@@ -85,6 +72,6 @@ my %results = map {
     my $image = tinycv::read $image_path;
     my ($match, $candidates) = $image->search($needles, $threshold, $search_ratio);
     ($image_path => {match => $match, candidates => $candidates});
-} @image_paths;
+} @{$opt->haystack_images};
 
 print encode_json(\%results);
