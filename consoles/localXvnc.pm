@@ -89,16 +89,24 @@ sub activate ($self) {
     start_xvnc($s, $display) unless $pid;
     close($s);
 
-    my $vnc = $self->connect_remote(
-        {
-            hostname => "localhost",
-            port => $port,
-            ikvm => 0
-        });
-    # disable checking VNC stalls as this setup would not survive possible re-connects anyways
-    $vnc->check_vnc_stalls(0);
-    bmwqemu::diag("Connected to Xvnc - PID $pid");
-    $self->{DISPLAY} = $display;
+    if (defined $self) {
+        my $vnc = $self->connect_remote(
+            {
+                hostname => "localhost",
+                port => $port,
+                ikvm => 0
+            });
+        # disable checking VNC stalls as this setup would not survive possible re-connects anyways
+        $vnc->check_vnc_stalls(0);
+        bmwqemu::diag("Connected to Xvnc - PID $pid");
+        $self->{DISPLAY} = $display;
+    }
+    else {
+        # this branch is useful for manual testing via:
+        # `perl -I. -E 'use consoles::localXvnc; $bmwqemu::scriptdir = Cwd::getcwd; consoles::localXvnc::activate(undef); waitpid -1, 0;'`
+        bmwqemu::fctinfo "Xvnc listening on 127.0.0.1$display\n";
+        system("vncviewer -Shared 127.0.0.1$display  & echo \"vncviewer PID is \$!\"");
+    }
     sleep 1;
 
     # we need a window manager for fullscreen apps to work
