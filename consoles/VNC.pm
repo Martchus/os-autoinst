@@ -23,6 +23,8 @@ our $VERSION = '0.40';
 my $MAX_PROTOCOL_VERSION = '003.008';
 my $MAX_PROTOCOL_HANDSHAKE = 'RFB ' . $MAX_PROTOCOL_VERSION . chr(0x0a);    # Max version supported
 
+use constant SIMULATE_STUCK => $ENV{OS_AUTOINST_SIMULATE_VNC_CONSOLE_STUCK} // 0;
+
 # This line comes from perlport.pod
 my $client_is_big_endian = unpack('h*', pack('s', 1)) =~ /01/ ? 1 : 0;
 
@@ -698,6 +700,15 @@ sub update_framebuffer ($self) {
     my $have_recieved_update = 0;
     eval {
         local $SIG{__DIE__} = undef;
+        if (SIMULATE_STUCK) {
+            state $message_count = 0;
+            ++$message_count;
+            bmwqemu::fctwarn "Receiving VNC message: $message_count";
+            if ($message_count > SIMULATE_STUCK) {
+                bmwqemu::fctwarn "Assuming VNC is stuck";
+                return $have_recieved_update;
+            }
+        }
         while (defined(my $message_type = $self->_receive_message())) {
             $have_recieved_update = 1 if $message_type == 0;
         }
