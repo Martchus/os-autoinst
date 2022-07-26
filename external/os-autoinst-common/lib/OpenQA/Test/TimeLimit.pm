@@ -3,6 +3,7 @@
 
 package OpenQA::Test::TimeLimit;
 use Test::Most;
+use Time::HiRes qw(ualarm);
 
 my $SCALE_FACTOR = 1;
 
@@ -15,7 +16,7 @@ sub import {
     $SCALE_FACTOR *= $ENV{OPENQA_TEST_TIMEOUT_SCALE_CI} // 2 if $ENV{CI};
     $limit *= $SCALE_FACTOR;
     $SIG{ALRM} = sub { BAIL_OUT "test '$0' exceeds runtime limit of '$limit' seconds\n" };
-    alarm $limit;
+    ualarm $limit;
 }
 
 sub scale_timeout {
