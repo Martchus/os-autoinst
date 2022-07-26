@@ -35,6 +35,8 @@ $bmwqemu::vars{VMWARE_VNC_OVER_WS_INSECURE} = 1;
 
 sub mk_res ($code, @text) { map { Mojo::Message::Response->new->code($code)->body($_) } @text }
 
+diag 'starting VMWare test';
+
 subtest 'test configuration with fake URL' => sub {
     my $vmware_mock = Test::MockModule->new('consoles::VMWare');
     my (@get_vmware_wss_url_args, @dewebsockify_args);
@@ -118,6 +120,8 @@ subtest 'deducing VNC over WebSockets URL from vars' => sub {
     $bmwqemu::vars{VMWARE_PASSWORD} = 'bar';
     is consoles::VMWare::deduce_url_from_vars($vnc_console), 'https://foo:bar@the-host', 'URL deduced from vars';
 };
+
+diag 'starting dewebsockify tests';
 
 subtest 'turning WebSocket into normal socket via dewebsockify' => sub {
     # define simple WebSocket server for testing
