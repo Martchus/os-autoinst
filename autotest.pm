@@ -118,10 +118,16 @@ sub loadtest ($script, %args) {
             use base 'basetest';
             use Mojo::File 'path';
             use Inline Python => 'import sys; sys.path.append(\"$inc\")';
-            use Inline Python => path('$casedir/$script')->slurp;
+            my \$script = path('$casedir/$script')->slurp;
+            \$script =~ s/^def (.*):/def ${name}_\$1:/mg;
+            print('script: ' . \$script);
+            use Inline Python => \$script;
+            sub run { ${name}_run(\@_) }
+            sub test_flags { ${name}_test_flags(\@_) }
             ";
         $is_python = 1;
     }
+    bmwqemu::diag 'the code: ' . $code;
     eval $code;
     if (my $err = $@) {
         if ($is_python) {
@@ -134,6 +140,7 @@ sub loadtest ($script, %args) {
         die $msg;
     }
     $test = $name->new($category);
+    bmwqemu::diag 'test run: ' . $test->run;
     $test->{script} = $script;
     $test->{fullname} = $fullname;
     $test->{serial_failures} = $testapi::distri->{serial_failures} // [];
