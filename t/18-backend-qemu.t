@@ -367,22 +367,22 @@ subtest 'migration to file' => sub {
             {execute => 'migrate-set-capabilities', arguments => {capabilities => [{capability => 'multifd', state => Mojo::JSON->true}]}},
             {execute => 'migrate-set-capabilities', arguments => {capabilities => [{capability => 'mapped-ram', state => Mojo::JSON->true}]}},
             {execute => 'migrate-set-parameters', arguments => {'multifd-channels' => 2, 'direct-io' => Mojo::JSON->true, 'max-bandwidth' => '9223372036854775807'}},
-        );
+        );    # uncoverable statement
     }
     else {
         push @expected, (
             {execute => 'migrate-set-parameters', arguments => {'compress-level' => 0, 'compress-threads' => 2, 'max-bandwidth' => '9223372036854775807'}},
-        );
+        );    # uncoverable statement
     }
     push @expected, (
         {execute => 'getfd', arguments => {fdname => 'dumpfd'}},
         {execute => 'stop'},
     );
     if ($backend->{qemu_version} ge version->declare(9.1)) {
-        push @expected, ({execute => 'migrate', arguments => {uri => 'file:dumpfd'}});
+        push @expected, ({execute => 'migrate', arguments => {uri => 'file:dumpfd'}});    # uncoverable statement
     }
     else {
-        push @expected, ({execute => 'migrate', arguments => {uri => 'fd:dumpfd'}});
+        push @expected, ({execute => 'migrate', arguments => {uri => 'fd:dumpfd'}});    # uncoverable statement
     }
     is_deeply $$invoked_qmp_cmds, \@expected, 'expected QMP commands invoked' or diag explain $$invoked_qmp_cmds;
 };
@@ -444,7 +444,7 @@ subtest 'saving memory dump' => sub {
                 execute => 'migrate-set-parameters',
                 arguments => {'multifd-channels' => 2, 'direct-io' => Mojo::JSON->true, 'max-bandwidth' => '9223372036854775807'},
             },
-        );
+        );    # uncoverable statement
     }
     else {
         push @expected, (
@@ -452,17 +452,17 @@ subtest 'saving memory dump' => sub {
                 execute => 'migrate-set-parameters',
                 arguments => {'compress-level' => 0, 'compress-threads' => 1, 'max-bandwidth' => '9223372036854775807'},
             },
-        );
+        );    # uncoverable statement
     }
     push @expected, (
         {execute => 'getfd', arguments => {fdname => 'dumpfd'}},
         {execute => 'stop'},
     );
     if ($backend->{qemu_version} ge version->declare(9.1)) {
-        push @expected, ({execute => 'migrate', arguments => {uri => 'file:dumpfd'}});
+        push @expected, ({execute => 'migrate', arguments => {uri => 'file:dumpfd'}});    # uncoverable statement
     }
     else {
-        push @expected, ({execute => 'migrate', arguments => {uri => 'fd:dumpfd'}});
+        push @expected, ({execute => 'migrate', arguments => {uri => 'fd:dumpfd'}});    # uncoverable statement
     }
     push @expected, ({execute => 'cont'});
     is_deeply $called{handle_qmp_command}, \@expected, 'expected QMP command called for "save_memory_dump"' or diag explain $called{handle_qmp_command};
@@ -546,13 +546,13 @@ subtest 'snapshot handling' => sub {
             {execute => 'migrate-set-capabilities', arguments => {capabilities => [{capability => 'mapped-ram', state => Mojo::JSON->true}]}},
             {execute => 'getfd', arguments => {fdname => 'dumpfd'}},
             {execute => 'migrate-incoming', arguments => {uri => 'file:dumpfd'}},
-        );
+        );    # uncoverable statement
     }
     else {
         push @expected, (
             {execute => 'migrate-set-capabilities', arguments => {capabilities => [{capability => 'compress', state => Mojo::JSON->true}]}},
             {execute => 'migrate-incoming', arguments => {uri => 'exec:cat vm-snapshots/fakevm'}},
-        );
+        );    # uncoverable statement
     }
     push @expected, ({execute => 'cont'});
     is_deeply $$invoked_qmp_cmds, \@expected, 'expected QMP commands invoked when loading snapshot' or diag explain $$invoked_qmp_cmds;
