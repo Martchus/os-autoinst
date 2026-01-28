@@ -189,7 +189,7 @@ sub loadtest ($script, %args) {
     my $code = "package $name;";
     my $module_code;
     if ($bmwqemu::vars{ENABLE_MODERN_PERL_FEATURES}) {
-        $code .= 'use Mojo::Base -strict, -signatures;';
+        $code .= 'use Import::Into; use Mojo::Base -strict, -signatures;';
         $module_code = path($script_path)->slurp;
     }
     $code .= "use lib '.';" unless path($casedir)->is_abs;
@@ -200,6 +200,9 @@ sub loadtest ($script, %args) {
     my $is_python = 0;
     my $is_lua = 0;
     if ($script =~ m/\.pm$/) {
+        if ($bmwqemu::vars{ENABLE_MODERN_PERL_FEATURES}) {
+            $module_code = "'$script_path'->import::into(caller);";
+        }
         $code .= $module_code // "require '$script_path';";
     }
     elsif ($script =~ m/\.py$/) {
