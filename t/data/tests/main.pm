@@ -8,6 +8,8 @@ use Cwd 'abs_path';
 use testapi;
 use testdistribution;
 
+set_var(ENABLE_MODERN_PERL_FEATURES => 1);
+
 my $distri = testdistribution->new();
 testapi::set_distribution($distri);
 
