@@ -454,6 +454,22 @@ subtest make_snapshot => sub {
     $autotest_mock->unmock('query_isotovideo');
 };
 
+
+subtest load_opensuse_tests => sub {
+    %autotest::tests = ();
+
+    # make compilation still work despite code like `my @category = split(/,/, get_required_var(\'CATEGORY\'));` on module level
+    my $testapi_mock = Test::MockModule->new('testapi');
+    $testapi_mock->redefine(get_required_var => sub (@args) { testapi::get_var(@args) // '?' });
+
+    # load all test modules of the openSUSE test distribution
+    my $opensuse_tests = path($bmwqemu::vars{CASEDIR} = "$ENV{OPENQA_BASEDIR}/openqa/share/tests/opensuse");
+    my $test_dirs = $opensuse_tests->child('tests')->list({dir => 1})->grep(sub ($dir) { -d $dir });
+    push @INC, $opensuse_tests->child('lib');
+    autotest::loadtestdir($_) for @$test_dirs;
+    ok keys %autotest::tests > 20, 'many tests added';
+};
+
 subtest loadtestdir => sub {
     my $autotest_mock = Test::MockModule->new('autotest');
     $autotest_mock->redefine(loadtest => sub ($script, @args) {
