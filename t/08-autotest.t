@@ -25,7 +25,9 @@ $bmwqemu::vars{ENABLE_MODERN_PERL_FEATURES} = 1;
 
 # allow warnings about redefined subs that happen because we load the same test
 # module multiple times
-allow_patterns qr|sub.*redefined at t/fake/tests|i;
+#no warn
+no warnings 'redefine';
+#allow_patterns qr|sub.*redefined at t/fake/tests|i;
 
 throws_ok { autotest::runalltests } qr/ERROR: no tests loaded/, 'runalltests needs tests loaded first';
 like warning {
@@ -105,7 +107,8 @@ is(keys %autotest::tests, 3, 'three steps have been scheduled (one twice)') || a
 is($autotest::tests{'tests-start1'}->{name}, 'start#1', 'handle duplicate tests');
 is($autotest::tests{'tests-start1'}->{fullname}, 'tests-start#1', 'duplicate test has correct fullname');
 is($autotest::tests{'tests-start1'}->{$_}, $autotest::tests{'tests-start'}->{$_}, "duplicate tests point to the same $_")
-  for qw(script category class);
+  for qw(script category);
+isnt $autotest::tests{'tests-start1'}->{class}, $autotest::tests{'tests-start'}->{class}, 'duplicate tests use different class';
 
 like warning {
     stderr_like { autotest::run_all } qr/Sending tests_done/, 'tests_done sent';
@@ -306,7 +309,7 @@ is($died, 0, 'fatal test failure should not die');
 is($completed, 0, 'fatal test failure should not complete');
 
 loadtest 'fatal', 'rescheduling same step later' for 1 .. 10;
-my @opts = qw(script fullname category class);
+my @opts = qw(script fullname category);
 is(@{$autotest::tests{'tests-fatal'}}{@opts}, @{$autotest::tests{'tests-fatal' . $_}}{@opts}, "tests-fatal$_ share same options with tests-fatal")
   && is(@{$autotest::tests{'tests-fatal' . $_}}{name}, 'fatal#' . $_)
   for 1 .. 10;
@@ -320,7 +323,7 @@ subtest 'test scheduling test modules at test runtime' => sub {
     my $json_filename = bmwqemu::result_dir . '/test_order.json';
     my @testorder = (
         {name => 'scheduler', category => 'tests', flags => {}, script => 'tests/scheduler.pm'},
-        {name => 'next', category => 'tests', flags => {}, script => 'tests/next.pm'}
+        {name => 'next::v2', category => 'tests', flags => {}, script => 'tests/next.pm'}
     );
 
     $mock_basetest->unmock('runtest');
@@ -329,7 +332,7 @@ subtest 'test scheduling test modules at test runtime' => sub {
     loadtest 'scheduler';
     ok !defined $json_data{$json_filename}, 'loadtest should not create test_order.json before tests started';
 
-    stderr_like { autotest::run_all } qr#scheduling next tests/next\.pm#, 'new test module gets scheduled at runtime';
+    stderr_like { autotest::run_all } qr#scheduling next::v2 tests/next\.pm#, 'new test module gets scheduled at runtime';
     is scalar @autotest::testorder, 2, 'loadtest adds new modules at runtime';
     is_deeply $json_data{$json_filename}, \@testorder, 'loadtest updates test_order.json at test runtime';
 
@@ -344,7 +347,7 @@ is(autotest::parse_test_path("$sharedir/factory/other/sysrq.pm"), 'other');
 subtest 'load test successfully when CASEDIR is a relative path' => sub {
     symlink($bmwqemu::vars{CASEDIR}, 'foo');
     $bmwqemu::vars{CASEDIR} = 'foo';
-    like warning { loadtest 'start' }, qr{Subroutine run redefined}, 'We get a warning for loading a test a second time';
+    loadtest 'start';
 };
 
 my $has_python = eval { require Inline::Python };

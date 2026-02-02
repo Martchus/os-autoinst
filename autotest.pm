@@ -178,6 +178,8 @@ sub _load_lua () {
     lua_set("use", \&_lua_use);
 }
 
+my %PACKAGE_NAME_COUNTS;
+
 sub loadtest ($script, %args) {
     no utf8;    # Inline Python fails on utf8, so let's exclude it here
     my $casedir = $bmwqemu::vars{CASEDIR};
@@ -186,7 +188,9 @@ sub loadtest ($script, %args) {
     my $test;
     my $fullname = "$category-$name";
     # perl code generating perl code is overcool
-    my $code = "package $name;";
+    my $name_count = ++$PACKAGE_NAME_COUNTS{$name};
+    my $package_name = $name_count > 1 ? "${name}::v${name_count}" : $name;
+    my $code = "package ${package_name};";
     my $module_code;
     if ($bmwqemu::vars{ENABLE_MODERN_PERL_FEATURES}) {
         $code .= 'use Mojo::Base -strict, -signatures;';
@@ -263,7 +267,7 @@ sub loadtest ($script, %args) {
         bmwqemu::serialize_state(component => 'tests', msg => "unable to load $script, check the log for the cause (e.g. syntax error)");
         die $msg;
     }
-    $test = $name->new($category);
+    $test = $package_name->new($category);
     $test->{script} = $script;
     $test->{fullname} = $fullname;
     $test->{serial_failures} = $testapi::distri->{serial_failures} // [];
