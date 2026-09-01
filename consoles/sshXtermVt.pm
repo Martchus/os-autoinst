@@ -69,4 +69,11 @@ sub kill_ssh ($self) {
     $self->backend->stop_ssh_serial;
 }
 
+# xterm-based consoles show SUT's interactive terminal/serial shell on the screen.
+# If pretty serial markers are enabled, the shell prints markers out-of-band directly
+# to the screen. This desynchronizes readline's cursor tracking, triggering a DSR
+# cursor query (\033[6n) that responds with a CPR (e.g. \033[64;1257R) to SUT's stdin,
+# corrupting the next typed command. Disable pretty markers here to avoid this.
+sub disable_pretty_serial_marker ($self) { 1 }
+
 1;

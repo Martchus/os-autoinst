@@ -42,6 +42,7 @@ $backend_mock->mock(
 );
 $backend_mock->set_true('stop_ssh_serial');
 my $c = consoles::sshXtermVt->new('sut', $args);
+is $c->disable_pretty_serial_marker, 1, 'pretty serial markers disabled';
 $c->{backend} = $backend_mock;
 my $captured_output = stderr_from { $c->activate() };
 like $captured_output, qr/Wait for SSH on host testhost/, 'Captured expected debug log';

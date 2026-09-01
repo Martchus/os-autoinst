@@ -571,6 +571,13 @@ Return the current C<PRETTY_SERIAL_MARKER> state. Falls back to the test variabl
 =cut
 
 sub get_pretty_serial_marker ($self) {
+    my $console_name = testapi::current_console();
+    if ($console_name) {
+        my $console = $self->{consoles}->{$console_name};
+        if ($console && $console->disable_pretty_serial_marker) {
+            return 0;
+        }
+    }
     return $self->{_pretty_serial_marker} // testapi::get_var('PRETTY_SERIAL_MARKER', 1);
 }
 

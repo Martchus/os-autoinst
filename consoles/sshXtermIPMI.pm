@@ -71,4 +71,7 @@ sub current_screen ($self) {
     }
 }
 
+# Refer to consoles::sshXtermVt for why pretty serial markers must be disabled on xterm-based consoles.
+sub disable_pretty_serial_marker ($self) { 1 }
+
 1;

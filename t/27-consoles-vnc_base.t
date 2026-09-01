@@ -16,6 +16,7 @@ use consoles::vnc_base;
 
 my $c = consoles::vnc_base->new('sut', {});
 is $c->screen, $c, 'screen returns self';
+is $c->disable_pretty_serial_marker, 0, 'pretty serial markers not disabled by default';
 my $vnc = Test::MockObject->new->set_true('map_and_send_key');
 $c->{vnc} = $vnc;
 $vnc->set_always('socket', 0);

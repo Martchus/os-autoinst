@@ -66,6 +66,8 @@ sub activate ($self) { }
 
 sub is_serial_terminal ($self) { 0 }
 
+sub disable_pretty_serial_marker ($self) { 0 }
+
 sub set_args ($self, %args) {
     my $my_args = $self->{args};
     $self->{args}->{$_} = $args{$_} for (keys %args);

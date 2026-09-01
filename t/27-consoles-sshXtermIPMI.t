@@ -47,6 +47,7 @@ $testapi_console_mock->redefine(backend => $backend);
 $localXvnc_mock->redefine(activate => sub ($self) { $self->{DISPLAY} = 'display'; });
 
 ok my $sol_connection = consoles::sshXtermIPMI->new($testapi_console, undef), 'sol connection can be established';
+is $sol_connection->disable_pretty_serial_marker, 1, 'pretty serial markers disabled';
 
 subtest 'sshXtermIPMI activate' => sub {
     my $ipc_run_mock = Test::MockModule->new('IPC::Run');

@@ -8,6 +8,7 @@ use Mojo::Base -signatures;
 use Test::Warnings qw(:all :report_warnings);
 use Test::Output qw(combined_like);
 use Test::MockModule;
+use Test::MockObject;
 use FindBin '$Bin';
 use lib "$Bin/../external/os-autoinst-common/lib";
 use distribution;
@@ -347,6 +348,13 @@ subtest 'pretty_serial_marker_helpers' => sub {
         is $vars{PRETTY_SERIAL_MARKER}, 1, 'Global var remains unchanged';
     }
     is $d->get_pretty_serial_marker(), 1, 'Value restored after guard scope';
+
+    # console-specific disablement
+    my $mock_console = Test::MockObject->new;
+    $mock_console->set_always(disable_pretty_serial_marker => 1);
+    $d->{consoles}->{'test-console'} = $mock_console;
+    is $d->get_pretty_serial_marker(), 0, 'pretty serial markers disabled if console disables them';
+    delete $d->{consoles}->{'test-console'};
 };
 
 subtest 'serial_marker_hook_persistence' => sub {
